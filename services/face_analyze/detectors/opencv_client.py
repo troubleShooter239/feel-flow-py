@@ -3,7 +3,7 @@ from typing import Any
 
 import cv2
 
-from base.base_detector import DetectorBase, ndarray, List, Tuple
+from ..base.base_detector import DetectorBase, ndarray, List, Tuple
 
 
 class OpenCvClient(DetectorBase):

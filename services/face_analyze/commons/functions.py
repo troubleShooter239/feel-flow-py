@@ -4,10 +4,10 @@ import numpy as np
 from cv2 import COLOR_BGR2GRAY, resize, cvtColor
 from numba import njit
 
-import models.face_attributes as face_attributes
-import models.recognition_models as recognition_models
-from detectors.opencv_client import DetectorWrapper
-from loaders.image_loader import load_image
+from ..models import face_attributes as fa
+from ..models import recognition_models as rm
+from ..detectors.opencv_client import DetectorWrapper
+from ..loaders.image_loader import load_image
 from .package_utils import Model, image
 
 
@@ -16,19 +16,19 @@ def build_model(model_name: str) -> Model:
     if not "model_obj" in globals():
         model_obj = dict()
     models = {
-        "VGG-Face": recognition_models.VggFaceClient,
-        "OpenFace": recognition_models.OpenFaceClient,
-        "Facenet": recognition_models.FaceNet128dClient,
-        "Facenet512": recognition_models.FaceNet512dClient,
-        "DeepFace": recognition_models.DeepFaceClient,
-        "DeepID": recognition_models.DeepIdClient,
-        "Dlib": recognition_models.DlibClient,
-        "ArcFace": recognition_models.ArcFaceClient,
-        "SFace": recognition_models.SFaceClient,
-        "Emotion": face_attributes.EmotionClient,
-        "Age": face_attributes.ApparentAgeClient,
-        "Gender": face_attributes.GenderClient,
-        "Race": face_attributes.RaceClient
+        "VGG-Face": rm.VggFaceClient,
+        "OpenFace": rm.OpenFaceClient,
+        "Facenet": rm.FaceNet128dClient,
+        "Facenet512": rm.FaceNet512dClient,
+        "DeepFace": rm.DeepFaceClient,
+        "DeepID": rm.DeepIdClient,
+        "Dlib": rm.DlibClient,
+        "ArcFace": rm.ArcFaceClient,
+        "SFace": rm.SFaceClient,
+        "Emotion": fa.EmotionClient,
+        "Age": fa.ApparentAgeClient,
+        "Gender": fa.GenderClient,
+        "Race": fa.RaceClient
     }
     if not model_name in model_obj:
         model_obj[model_name] = models[model_name]()

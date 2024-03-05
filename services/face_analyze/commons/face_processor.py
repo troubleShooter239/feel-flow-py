@@ -2,7 +2,7 @@ from typing import Dict, Union
 
 import numpy as np
 
-from models.face_attributes import EmotionClient, GenderClient, RaceClient
+from ..models.face_attributes import EmotionClient, GenderClient, RaceClient
 
 
 class FaceProcessor:

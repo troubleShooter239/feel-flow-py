@@ -1,33 +1,28 @@
-from base64 import b64decode, b64encode
+from base64 import b64decode
 from io import BytesIO
 from typing import Any, Dict, Union
-from json import dumps, loads
 
 import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS, IFD
 
-import commons.functions as F
-from commons.distance import find_cosine, find_euclidean
-from commons.folder_utils import initialize_folder
-from commons.face_processor import FaceProcessor
-from commons.package_utils import Model
+from .commons.distance import find_cosine, find_euclidean
+from .commons import functions as F
+from .commons.folder_utils import initialize_folder
+from .commons.face_processor import FaceProcessor
+from .commons.package_utils import Model
 
 initialize_folder()
 
 def analyze(img: Union[str, np.ndarray], 
-            actions: str = '{"age": true, "emotion": true, "gender": true, "race": true}',
-            enforce_detection: bool = True, align: bool = True) -> str:
+            actions: Dict[str, bool] = {"age": True, "emotion": True, "gender": True, "race": True},
+            align: bool = True, enforce_detection: bool = True) -> Dict[str, Any]:
     try:
         img_objs = F.extract_faces(img, (224, 224), False, enforce_detection, align)
     except ValueError:
-        return "{}"
-    try:
-        act_dict = loads(actions)
-    except Exception:
-        return "{}"
+        return {}
     
-    models: Dict[str, Model] = {a: F.build_model(a.capitalize()) for a, s in act_dict.items() if s}
+    models: Dict[str, Model] = {a: F.build_model(a.capitalize()) for a, s in actions.items() if s}
     resp_objects = []
     
     # TODO: Make it parallel
@@ -45,7 +40,7 @@ def analyze(img: Union[str, np.ndarray],
 
         resp_objects.append(obj)
 
-    return dumps(resp_objects, indent=2)
+    return resp_objects
 
 
 def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray], 
@@ -86,30 +81,27 @@ def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray],
     }
 
 
-def get_image_metadata(b64_image: str) -> str:
-    try:
-        image = b64decode(b64_image)
-    except Exception:
-        return "{}"
-
+def get_image_metadata(image: bytes) -> Dict[str, Any]:
     i = Image.open(BytesIO(image))
     
     exif = i.getexif()
 
-    data = {"Summary": {
-        "ImageSize": str(i.size),
-        "FileType": str(i.format),
-        "FormatDescription": i.format_description,
-        "Mode": i.mode,
-        "MIME": str(Image.MIME.get(i.format, None)),
-        "BandNames": str(i.getbands()),
-        "BBox": str(i.getbbox()),
-        "Megapixels": str(round(i.size[0] * i.size[1] / 1000000, 2)),
-        "Extrema": str(i.getextrema()),
-        "HasTransparency": str(i.has_transparency_data),
-        "Readonly": str(i.readonly),
-        "Palette": str(i.palette),
-    }}
+    data = {
+        "Summary": {
+            "ImageSize": str(i.size),
+            "FileType": str(i.format),
+            "FormatDescription": i.format_description,
+            "Mode": i.mode,
+            "MIME": str(Image.MIME.get(i.format, None)),
+            "BandNames": str(i.getbands()),
+            "BBox": str(i.getbbox()),
+            "Megapixels": str(round(i.size[0] * i.size[1] / 1000000, 2)),
+            "Extrema": str(i.getextrema()),
+            "HasTransparency": str(i.has_transparency_data),
+            "Readonly": str(i.readonly),
+            "Palette": str(i.palette),
+        }
+    }
 
     i.close()
 
@@ -138,4 +130,4 @@ def get_image_metadata(b64_image: str) -> str:
             finally:
                 data[ifd_id.name][str(k)] = str(v)
 
-    return dumps(data, indent=2)
+    return data

@@ -9,11 +9,11 @@ from dlib import face_recognition_model_v1
 from gdown import download
 from numpy import array, expand_dims, ndarray, uint8
 
-import commons.constants as C
-import commons.functions as F
-from base.base_models import FacialRecognitionBase, FaceNetBase
-from commons.folder_utils import get_deepface_home
-from commons.package_utils import (
+from ..commons import constants as C
+from ..commons import functions as F
+from ..base.base_models import FacialRecognitionBase, FaceNetBase
+from ..commons.folder_utils import get_deepface_home
+from ..commons.package_utils import (
     Model, BatchNormalization, Dropout, Flatten, Dense, Input, ZeroPadding2D, Conv2D, 
     PReLU, Add, Sequential, Convolution2D, MaxPooling2D, Activation, training, 
     LocallyConnected2D, Lambda, concatenate, AveragePooling2D, l2_normalize, sqrt

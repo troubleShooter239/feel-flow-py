@@ -5,9 +5,9 @@ from typing import List, Union
 from gdown import download
 from numpy import ndarray, float64
 
-import commons.constants as C
-from commons.folder_utils import get_deepface_home
-from commons.package_utils import (
+from ..commons import constants as C
+from ..commons.folder_utils import get_deepface_home
+from ..commons.package_utils import (
     Model, Activation, Conv2D, Input, BatchNormalization, MaxPooling2D, Concatenate, 
     Lambda, int_shape, add, GlobalAveragePooling2D, Dense, Dropout
 )
