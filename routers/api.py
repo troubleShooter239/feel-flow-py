@@ -1,4 +1,5 @@
 from base64 import b64decode
+from typing import Dict
 
 from fastapi import APIRouter
 
@@ -14,18 +15,17 @@ router = APIRouter()
 #
 @router.post("/analyze")
 def analyze_image(request: AnalyzeModel):
-    data = request.model_dump()
-
+    return analyze(request.b64_img, request.actions)
 
 @router.post("/metadata")
 def img_metadata(request: MetadataModel):
-    data = request.model_dump()
     try:                                    
-        return get_image_metadata(b64decode(data["b64_img"]))
+        return get_image_metadata(b64decode(request.b64_img))
     except Exception:
         return {}
 
 
 @router.post("/verify")
 def verify_img(request: VerifyModel):
-    data = request.model_dump()
+    return verify(request.b64_img1, request.b64_img2, 
+                  request.model_name, request.distance_metric)
