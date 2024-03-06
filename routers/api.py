@@ -29,5 +29,3 @@ def img_metadata(request: MetadataModel):
 @router.post("/verify")
 def verify_img(request: VerifyModel):
     data = request.model_dump()
-
-
