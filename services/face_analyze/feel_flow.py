@@ -1,6 +1,6 @@
 from base64 import b64decode
 from io import BytesIO
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
 import numpy as np
 from PIL import Image
@@ -16,14 +16,13 @@ initialize_folder()
 
 def analyze(img: Union[str, np.ndarray], 
             actions: Dict[str, bool] = {"age": True, "emotion": True, "gender": True, "race": True},
-            align: bool = True, enforce_detection: bool = True) -> Dict[str, Any]:
+            align: bool = True, enforce_detection: bool = True) -> List[Dict[str, Any]]:
     try:
         img_objs = F.extract_faces(img, (224, 224), False, enforce_detection, align)
     except ValueError:
         return {}
-    
     models: Dict[str, Model] = {a: F.build_model(a.capitalize()) for a, s in actions.items() if s}
-    resp_objects = []
+    resp_objects: List[Dict[str, Any]] = []
     
     # TODO: Make it parallel
     for img, region, confidence in img_objs:

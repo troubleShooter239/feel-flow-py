@@ -140,15 +140,10 @@ def extract_faces(img: Union[str, np.ndarray], target_size: tuple = (224, 224),
     face_objs = DetectorWrapper.detect_faces(img, align)
 
     if len(face_objs) == 0 and enforce_detection:
-        if img_name is not None:
-            raise ValueError(f"Face could not be detected in {img_name}."
-                             "Please confirm that the picture is a face photo "
-                             "or consider to set enforce_detection param to False.")
-        else:
-            raise ValueError("Face could not be detected. Please confirm that the "
-                             "picture is a face photo or consider to set "
-                             "enforce_detection param to False.")
-
+        raise ValueError(f"Face could not be detected in {None if img_name is None else img_name}."
+                            "Please confirm that the picture is a face photo "
+                            "or consider to set enforce_detection param to False.")
+    
     img_region = [0, 0, img.shape[1], img.shape[0]]
     if len(face_objs) == 0 and not enforce_detection:
         face_objs = [(img, img_region, 0)]

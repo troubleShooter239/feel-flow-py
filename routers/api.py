@@ -7,7 +7,6 @@ from models.metadata import MetadataModel
 from models.verify import VerifyModel
 from services.face_analyze.feel_flow import analyze, get_image_metadata, verify
 
-
 router = APIRouter()
 
 #
