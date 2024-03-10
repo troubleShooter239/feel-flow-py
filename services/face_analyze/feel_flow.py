@@ -1,4 +1,4 @@
-from base64 import b64decode
+import asyncio
 from io import BytesIO
 from typing import Any, Dict, List, Union
 
@@ -14,14 +14,17 @@ from .commons.package_utils import Model
 
 initialize_folder()
 
-def analyze(img: Union[str, np.ndarray], 
-            actions: Dict[str, bool] = {"age": True, "emotion": True, "gender": True, "race": True},
-            align: bool = True, enforce_detection: bool = True) -> List[Dict[str, Any]]:
+async def analyze(img: Union[str, np.ndarray], 
+                  actions: Dict[str, bool] = {"age": True, "emotion": True, "gender": True, "race": True},
+                  align: bool = True, enforce_detection: bool = True) -> List[Dict[str, Any]]:
     try:
-        img_objs = F.extract_faces(img, (224, 224), False, enforce_detection, align)
+        img_objs = await asyncio.to_thread(F.extract_faces, img, (224, 224), 
+                                           False, enforce_detection, align)
     except ValueError:
-        return {}
-    models: Dict[str, Model] = {a: F.build_model(a.capitalize()) for a, s in actions.items() if s}
+        return [{}]
+    models: Dict[str, Model] = {
+        a: await asyncio.to_thread(F.build_model, a.capitalize()) for a, s in actions.items() if s
+    }
     resp_objects: List[Dict[str, Any]] = []
     
     # TODO: Make it parallel
@@ -31,42 +34,46 @@ def analyze(img: Union[str, np.ndarray],
         
         obj = {"region": region, "face_confidence": confidence}
         
-        for action, model in models.items():
-            try:
-                obj.update(getattr(FaceProcessor, action)(model.predict(img)))
-            except Exception:
-                continue
+        tasks = [
+            asyncio.to_thread(getattr(FaceProcessor, a), m.predict(img)) for a, m in models.items()
+        ]
+        try:
+            obj.update(zip(models.keys(), await asyncio.gather(**tasks)))
+        except Exception:
+            continue
 
         resp_objects.append(obj)
 
     return resp_objects
 
 
-def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray], 
-           model_name: str = "VGG-Face", distance_metric: str = "cosine", 
-           enforce_detection: bool = True, align: bool = True, 
-           normalization: str = "base") -> Dict[str, Any]:
-    target_size = F.find_size(model_name)
+async def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray], 
+                 model_name: str = "VGG-Face", distance_metric: str = "cosine", 
+                 enforce_detection: bool = True, align: bool = True, 
+                 normalization: str = "base") -> Dict[str, Any]:
+    target_size = await asyncio.to_thread(F.find_size, model_name)
 
     distances, regions = [], []
-    for c1, r1, _ in F.extract_faces(img1, target_size, False, enforce_detection, align):
-        for c2, r2, _ in F.extract_faces(img2, target_size, False, enforce_detection, align):
-            repr1 = F.represent(c1, model_name, enforce_detection, "skip", 
-                              align, normalization)[0]["embedding"]
-            repr2 = F.represent(c2, model_name, enforce_detection, "skip", 
-                              align, normalization)[0]["embedding"]
+    for c1, r1, _ in await asyncio.to_thread(F.extract_faces, img1, target_size, False, enforce_detection, align):
+        for c2, r2, _ in await asyncio.to_thread(F.extract_faces, img2, target_size, False, enforce_detection, align):
+            repr1 = (await asyncio.to_thread(
+                F.represent, c1, model_name, enforce_detection, "skip", align, normalization
+            ))[0]["embedding"]
+            repr2 = (await asyncio.to_thread(
+                F.represent, c2, model_name, enforce_detection, "skip", align, normalization
+            ))[0]["embedding"]
 
             if distance_metric == "cosine":
-                dst = find_cosine(repr1, repr2)
+                dst = await asyncio.to_thread(find_cosine, repr1, repr2)
             elif distance_metric == "euclidean":
-                dst = find_euclidean(repr1, repr2)
+                dst = await asyncio.to_thread(find_euclidean, repr1, repr2)
             else:
-                dst = find_euclidean(dst.l2_normalize(repr1), dst.l2_normalize(repr2))
+                dst = await asyncio.to_thread(find_euclidean, F.l2_normalize(repr1), F.l2_normalize(repr2))
 
             distances.append(dst)
             regions.append((r1, r2))
 
-    threshold = F.find_threshold(model_name, distance_metric)
+    threshold = await asyncio.to_thread(F.find_threshold, model_name, distance_metric)
     distance = min(distances)
     facial_areas = regions[np.argmin(distances)]
     
@@ -83,8 +90,6 @@ def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray],
 def get_image_metadata(image: bytes) -> Dict[str, Any]:
     i = Image.open(BytesIO(image))
     
-    exif = i.getexif()
-
     data = {
         "Summary": {
             "ImageSize": str(i.size),
@@ -101,8 +106,12 @@ def get_image_metadata(image: bytes) -> Dict[str, Any]:
             "Palette": str(i.palette),
         }
     }
+    exif = i.getexif()
 
     i.close()
+
+    if exif is None:
+        return data
 
     for k, v in exif.items():
         try:
@@ -114,9 +123,9 @@ def get_image_metadata(image: bytes) -> Dict[str, Any]:
     
     for ifd_id in IFD:
         data[ifd_id.name] = {}
-        try:
-            ifd = exif.get_ifd(ifd_id)
-        except KeyError:
+
+        ifd = exif.get_ifd(ifd_id)
+        if ifd is None:
             continue
 
         resolve = GPSTAGS if ifd_id == IFD.GPSInfo else TAGS

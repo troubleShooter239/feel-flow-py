@@ -1,5 +1,4 @@
 from base64 import b64decode
-from typing import Dict
 
 from fastapi import APIRouter
 
