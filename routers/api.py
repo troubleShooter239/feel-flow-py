@@ -9,22 +9,27 @@ from services.face_analyze.feel_flow import analyze, get_image_metadata, verify
 
 router = APIRouter()
 
-#
-#   TODO: Add try/except blocks for request
-#
+
 @router.post("/analyze")
-def analyze_image(request: AnalyzeModel):
-    return analyze(request.b64_img, request.actions)
+async def analyze_image(request: AnalyzeModel):
+    try:
+        return await analyze(request.b64_img, request.actions)
+    except Exception as e:
+        return {"error": e}
+
 
 @router.post("/metadata")
 def img_metadata(request: MetadataModel):
     try:                                    
         return get_image_metadata(b64decode(request.b64_img))
-    except Exception:
-        return {}
+    except Exception as e:
+        return {"error": e}
 
 
 @router.post("/verify")
-def verify_img(request: VerifyModel):
-    return verify(request.b64_img1, request.b64_img2, 
-                  request.model_name, request.distance_metric)
+async def verify_img(request: VerifyModel):
+    try:
+        return await verify(request.b64_img1, request.b64_img2, 
+                            request.r_model_name, request.distance_metric)
+    except Exception as e:
+        return {"error": e}
