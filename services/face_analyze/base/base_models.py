@@ -14,12 +14,20 @@ from ..commons.package_utils import (
 
 
 class BaseModel(ABC):
+    """Abstract base class for deep learning models."""
     def __init__(self) -> None:
         self.model: Model
         self.model_name: str
 
     @abstractmethod 
     def load_model(self, url: str) -> Model: 
+        """Load a pre-trained model from a URL.
+
+        Args:
+            url (str): URL from which to load the model.
+
+        Returns:
+            Model: Loaded pre-trained model."""
         pass
 
     @staticmethod
@@ -29,23 +37,50 @@ class BaseModel(ABC):
 
 
 class AttributeModelBase(BaseModel):
+    """Abstract base class for attribute prediction models."""
+
     @abstractmethod
     def predict(self, img: ndarray) -> Union[ndarray, float64]: 
+        """Predict attributes for a given image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            Union[ndarray, float64]: Predicted attributes."""
         pass
 
 
 class FacialRecognitionBase(BaseModel):
+    """Abstract base class for facial recognition models."""
+
     @abstractmethod 
     def find_embeddings(self, img: ndarray) -> List[float]: 
+        """Find facial embeddings for a given image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         pass
 
 
 class FaceNetBase(FacialRecognitionBase):
+    """Base class for the FaceNet facial recognition model."""
+
     @staticmethod
     def _inception_res_netV2(dimension: int = 128) -> Model:
+        """Create an Inception-ResNetV2 model for FaceNet.
+
+        Args:
+            dimension (int): Embedding dimension. Defaults to 128.
+
+        Returns:
+            Model: Inception-ResNetV2 model."""
         def scaling(x, scale): 
             return x * scale
-        
+
         inputs = Input(shape=(160, 160, 3))
         x = Conv2D(32, 3, strides=2, padding="valid", use_bias=False, name="Conv2d_1a_3x3")(inputs)
         x = BatchNormalization(axis=3, momentum=0.995, epsilon=0.001, scale=False, 
@@ -757,6 +792,13 @@ class FaceNetBase(FacialRecognitionBase):
         return Model(inputs, x, name="inception_resnet_v1")
 
     def load_model(self, url: str = C.DOWNLOAD_URL_FACENET) -> Model:
+        """Load the FaceNet model.
+
+        Args:
+            url (str): URL from which to download the model weights. Defaults to C.DOWNLOAD_URL_FACENET.
+
+        Returns:
+            Model: Loaded FaceNet model."""
         if self.__class__.__name__ == "FaceNet128dClient":
             model = FaceNetBase._inception_res_netV2()
             output = get_deepface_home() + C.PATH_WEIGHTS_FACENET

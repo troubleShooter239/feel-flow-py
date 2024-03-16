@@ -12,6 +12,13 @@ from .package_utils import Model, image
 
 
 def build_model(model_name: str) -> Model:
+    """Builds and returns the specified recognition model.
+
+    Args:
+        model_name (str): Name of the recognition model.
+
+    Returns:
+        Model: Instance of the specified recognition model."""
     global model_obj
     if not "model_obj" in globals():
         model_obj = dict()
@@ -37,12 +44,27 @@ def build_model(model_name: str) -> Model:
 
 @njit
 def l2_normalize(x: Union[np.ndarray, list]) -> np.ndarray:
+    """Normalizes the input vector.
+
+    Args:
+        x (Union[np.ndarray, list]): Input vector.
+
+    Returns:
+        np.ndarray: Normalized vector."""
     if isinstance(x, list):
         x = np.array(x)
     return x / np.sqrt(np.sum(np.multiply(x, x)))
 
 
 def find_threshold(model_name: str, distance_metric: str) -> float:
+    """Finds the threshold value based on the model and distance metric.
+
+    Args:
+        model_name (str): Name of the recognition model.
+        distance_metric (str): Distance metric used for comparison.
+
+    Returns:
+        float: Threshold value."""
     base_threshold = {"cosine": 0.40, "euclidean": 0.55, "euclidean_l2": 0.75}
     thresholds = {
         "VGG-Face": {"cosine": 0.68, "euclidean": 1.17, "euclidean_l2": 1.17},
@@ -60,6 +82,14 @@ def find_threshold(model_name: str, distance_metric: str) -> float:
 
 
 def normalize_input(img: np.ndarray, normalization: str = "base") -> np.ndarray:
+    """Normalize input image.
+
+    Args:
+        img (np.ndarray): Input image.
+        normalization (str, optional): Type of normalization. Defaults to "base".
+
+    Returns:
+        np.ndarray: Normalized image."""
     if normalization == "base":
         return img
     img *= 255
@@ -86,6 +116,13 @@ def normalize_input(img: np.ndarray, normalization: str = "base") -> np.ndarray:
 
 
 def find_size(model_name: str) -> Tuple[int, int]:
+    """Finds the image size based on the recognition model.
+
+    Args:
+        model_name (str): Name of the recognition model.
+
+    Returns:
+        Tuple[int, int]: Image size."""
     sizes = {
         "VGG-Face": (224, 224),
         "Facenet": (160, 160),
@@ -106,6 +143,18 @@ def find_size(model_name: str) -> Tuple[int, int]:
 def represent(img_path: Union[str, np.ndarray], model_name: str = "VGG-Face", 
               enforce_detection: bool = True, detector_backend: str = "opencv",
               align: bool = True, normalization: str = "base") -> List[Dict[str, Any]]:
+    """Represent an image with the specified recognition model.
+
+    Args:
+        img_path (Union[str, np.ndarray]): Path to the image or image array.
+        model_name (str, optional): Name of the recognition model. Defaults to "VGG-Face".
+        enforce_detection (bool, optional): Whether to enforce face detection. Defaults to True.
+        detector_backend (str, optional): Backend for face detection. Defaults to "opencv".
+        align (bool, optional): Whether to align faces. Defaults to True.
+        normalization (str, optional): Type of normalization. Defaults to "base".
+
+    Returns:
+        List[Dict[str, Any]]: List of representations."""
     model = build_model(model_name)
     target_size = find_size(model_name)
     if detector_backend != "skip":
@@ -135,6 +184,18 @@ def represent(img_path: Union[str, np.ndarray], model_name: str = "VGG-Face",
 def extract_faces(img: Union[str, np.ndarray], target_size: tuple = (224, 224), 
                   grayscale: bool = False, enforce_detection: bool = True, 
                   align: bool = True) -> List[Tuple[np.ndarray, Dict[str, int], float]]:
+    """Extract faces from an image.
+
+    Args:
+        img (Union[str, np.ndarray]): Path to the image or image array.
+        target_size (tuple, optional): Target size of the face. Defaults to (224, 224).
+        grayscale (bool, optional): Whether to convert the image to grayscale. Defaults to False.
+        enforce_detection (bool, optional): Whether to enforce face detection. Defaults to True.
+        align (bool, optional): Whether to align faces. Defaults to True.
+
+    Returns:
+        List[Tuple[np.ndarray, Dict[str, int], float]]: List of tuples containing face images, 
+        facial area coordinates, and confidence scores."""
     img, img_name = load_image(img)
 
     face_objs = DetectorWrapper.detect_faces(img, align)

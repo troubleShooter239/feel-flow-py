@@ -21,12 +21,27 @@ from ..commons.package_utils import (
 
 class ArcFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the ArcFaceClient."""
         self.model, self.model_name = self.load_model(), "ArcFace"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
     def load_model(self, url: str = C.DOWNLOAD_URL_ARCFACE) -> Model:
+        """Load the ArcFace model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_ARCFACE.
+
+        Returns:
+            Model: Loaded model."""
         base_model = ArcFaceClient.ResNet34()
         inputs = base_model.inputs[0]
         arcface_model = base_model.outputs[0]
@@ -45,6 +60,10 @@ class ArcFaceClient(FacialRecognitionBase):
 
     @staticmethod
     def ResNet34() -> Model:
+        """Define the ResNet34 architecture.
+
+        Returns:
+            Model: ResNet34 model."""
         img_input = Input(shape=(112, 112, 3))
         x = ZeroPadding2D(padding=1, name="conv1_pad")(img_input)
         x = Conv2D(64, 3, strides=1, use_bias=False, 
@@ -56,6 +75,18 @@ class ArcFaceClient(FacialRecognitionBase):
 
     @staticmethod
     def block1(x, filters, kernel_size = 3, stride = 1, conv_shortcut = True, name = None):
+        """Define a basic residual block for the ResNet architecture.
+
+        Args:
+            x (tensor): Input tensor.
+            filters (int): Number of filters.
+            kernel_size (int, optional): Size of the convolutional kernel. Defaults to 3.
+            stride (int, optional): Stride size. Defaults to 1.
+            conv_shortcut (bool, optional): Whether to apply convolutional shortcut. Defaults to True.
+            name (str, optional): Block name. Defaults to None.
+
+        Returns:
+            tensor: Output tensor."""
         bn_axis = 3
         if conv_shortcut:
             shortcut = Conv2D(filters,
@@ -90,6 +121,17 @@ class ArcFaceClient(FacialRecognitionBase):
 
     @staticmethod
     def stack1(x, filters, blocks, stride1 = 2, name = None):
+        """Define a stack of basic residual blocks for the ResNet architecture.
+
+        Args:
+            x (tensor): Input tensor.
+            filters (int): Number of filters.
+            blocks (int): Number of blocks.
+            stride1 (int, optional): Stride size for the first block. Defaults to 2.
+            name (str, optional): Stack name. Defaults to None.
+
+        Returns:
+            tensor: Output tensor."""
         x = ArcFaceClient.block1(x, filters, stride=stride1, name=name + "_block1")
         for i in range(2, blocks + 1):
             x = ArcFaceClient.block1(x, filters, conv_shortcut=False, name=name + "_block" + str(i))
@@ -97,6 +139,13 @@ class ArcFaceClient(FacialRecognitionBase):
 
     @staticmethod
     def stack_fn(x):
+        """Define the ResNet architecture.
+
+        Args:
+            x (tensor): Input tensor.
+
+        Returns:
+            tensor: Output tensor."""
         x = ArcFaceClient.stack1(x, 64, 3, name="conv2")
         x = ArcFaceClient.stack1(x, 128, 4, name="conv3")
         x = ArcFaceClient.stack1(x, 256, 6, name="conv4")
@@ -105,12 +154,27 @@ class ArcFaceClient(FacialRecognitionBase):
 
 class DeepFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the DeepFaceClient."""
         self.model, self.model_name = self.load_model(), "DeepFace"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
     def load_model(self, url: str = C.DOWNLOAD_URL_DEEPFACE) -> Model:
+        """Load the DeepFace model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_DEEPFACE.
+
+        Returns:
+            Model: Loaded model."""
         base_model = Sequential()
         base_model.add(Convolution2D(32, (11, 11), activation="relu", 
                                      name="C1", input_shape=(152, 152, 3)))
@@ -135,13 +199,28 @@ class DeepFaceClient(FacialRecognitionBase):
 
 
 class DeepIdClient(FacialRecognitionBase):
+    """Initialize the DeepIdClient."""
     def __init__(self) -> None:
         self.model, self.model_name = self.load_model(), "DeepId"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
     def load_model(self, url: str = C.DOWNLOAD_URL_DEEPID) -> Model:
+        """Load the DeepId model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_DEEPID.
+
+        Returns:
+            Model: Loaded model."""
         myInput = Input(shape=(55, 47, 3))
         x = Conv2D(20, (4, 4), name="Conv1", activation="relu", input_shape=(55, 47, 3))(myInput)
         x = MaxPooling2D(pool_size=2, strides=2, name="Pool1")(x)
@@ -168,6 +247,7 @@ class DeepIdClient(FacialRecognitionBase):
 
 class DlibResNet:
     def __init__(self) -> None:
+        """Initialize the DlibResNet."""
         self.layers = [DlibMetaData()]
         file = get_deepface_home() + C.PATH_WEIGHTS_DLIB
         if not isfile(file):
@@ -180,14 +260,23 @@ class DlibResNet:
 
 class DlibMetaData:
     def __init__(self) -> None: 
+        """Initialize DlibMetaData."""
         self.input_shape = [[1, 150, 150, 3]]
 
 
 class DlibClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the DlibClient."""
         self.model, self.model_name = DlibResNet(), "Dlib"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         if len(img.shape) == 4:
             img = img[0]
 
@@ -202,28 +291,59 @@ class DlibClient(FacialRecognitionBase):
 
 class FaceNet128dClient(FaceNetBase):
     def __init__(self) -> None:
+        """Initialize the FaceNet128dClient."""
         self.model, self.model_name = super().load_model(), "FaceNet-128d"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
 
 class FaceNet512dClient(FaceNetBase):
     def __init__(self) -> None:
+        """Initialize the FaceNet512dClient."""
         self.model, self.model_name = super().load_model(), "FaceNet-512d"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
 
 class OpenFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the OpenFaceClient."""
         self.model, self.model_name = self.load_model(), "OpenFace"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model(img, training=False).numpy()[0].tolist()
 
     def load_model(self, url: str = C.DOWNLOAD_URL_OPENFACE) -> Model:
+        """Load the OpenFace model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_OPENFACE.
+
+        Returns:
+            Model: Loaded model."""
         myInput = Input(shape=(96, 96, 3))
         x = ZeroPadding2D(padding=(3, 3), input_shape=(96, 96, 3))(myInput)
         x = Conv2D(64, (7, 7), strides=(2, 2), name="conv1")(x)
@@ -462,17 +582,36 @@ class SFaceWrapper:
         input_shape, output_shape = (None, 112, 112, 3), (None, 1, 128)
 
     def __init__(self, model_path: str) -> None:
+        """Initialize the SFaceWrapper.
+
+        Args:
+            model_path (str): Path to the SFace model."""
         self.model, self.layers = FaceRecognizerSF.create(model_path, "", 0, 0), [self.Layer()]
 
 
 class SFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the SFaceClient."""
         self.model, self.model_name = self.load_model(), "SFace"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return self.model.model.feature((img[0] * 255).astype(uint8))[0].tolist()
 
     def load_model(self, url: str = C.DOWNLOAD_URL_SFACE) -> SFaceWrapper:
+        """Load the SFace model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_SFACE.
+
+        Returns:
+            SFaceWrapper: SFace model wrapper."""
         output = get_deepface_home() + C.PATH_WEIGHTS_SFACE
         self._download(url, output)
         return SFaceWrapper(output)
@@ -480,13 +619,25 @@ class SFaceClient(FacialRecognitionBase):
 
 class VggFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
+        """Initialize the VggFaceClient."""
         self.model, self.model_name = self.load_model(), "VGG-Face"
 
     def find_embeddings(self, img: ndarray) -> List[float]:
+        """Find facial embeddings from the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            List[float]: Facial embeddings."""
         return F.l2_normalize(self.model(img, training=False).numpy()[0].tolist()).tolist()
 
     @staticmethod
     def base_model() -> Sequential:
+        """Define the base VGGFace model architecture.
+
+        Returns:
+            Sequential: VGGFace base model."""
         model = Sequential()
         model.add(ZeroPadding2D((1, 1), input_shape=(224, 224, 3)))
         model.add(Convolution2D(64, (3, 3), activation="relu"))
@@ -529,6 +680,13 @@ class VggFaceClient(FacialRecognitionBase):
         return model
 
     def load_model(self, url: str = C.DOWNLOAD_URL_VGGFACE) -> Model:
+        """Load the VGGFace model.
+
+        Args:
+            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_VGGFACE.
+
+        Returns:
+            Model: Loaded VGGFace model."""
         model = VggFaceClient.base_model()
         output = get_deepface_home() + C.PATH_WEIGHTS_VGGFACE
         self._download(url, output)

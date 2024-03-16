@@ -2,7 +2,7 @@ _DEEPFACE_HOME: str = "DEEPFACE_HOME"
 _DOWNLOAD_URL: str = "https://github.com/serengil/deepface_models/releases/download/v1.0/"
 _WEIGHTS: str = "/.deepface/weights/"
 
-# face attributes
+# Face attributes
 AGE_NAME: str = "age_model_weights.h5"
 DOWNLOAD_URL_AGE: str = _DOWNLOAD_URL + AGE_NAME
 PATH_WEIGHTS_AGE: str = _WEIGHTS + AGE_NAME
@@ -19,7 +19,7 @@ RACE_NAME: str = "race_model_single_batch.h5"
 DOWNLOAD_URL_RACE: str = _DOWNLOAD_URL + RACE_NAME
 PATH_WEIGHTS_RACE: str = _WEIGHTS + RACE_NAME
 
-# recognition
+# Recognition
 ARCFACE_NAME: str = "arcface_weights.h5"
 DOWNLOAD_URL_ARCFACE: str = _DOWNLOAD_URL + ARCFACE_NAME
 PATH_WEIGHTS_ARCFACE: str = _WEIGHTS + ARCFACE_NAME

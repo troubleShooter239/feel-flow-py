@@ -7,10 +7,19 @@ from ..base.base_detector import DetectorBase, ndarray, List, Tuple
 
 
 class OpenCvClient(DetectorBase):
+    """Class for face detection using OpenCV.
+
+    Attributes:
+        model (dict): Dictionary containing the built face and eye detector models."""
     def __init__(self):
         self.model = self.build_model()
 
     def build_model(self) -> dict:
+        """Builds and returns the face and eye detector models.
+
+        Returns:
+            dict: Dictionary containing the face and eye detector models.
+        """
         return {
             "face_detector": self.__build_cascade("haarcascade"),
             "eye_detector": self.__build_cascade("haarcascade_eye")
@@ -18,6 +27,15 @@ class OpenCvClient(DetectorBase):
 
     def detect_faces(self, img: ndarray, 
                      align: bool = True) -> List[Tuple[ndarray, List[float], float]]:
+        """Detects faces in the input image.
+
+        Args:
+            img (ndarray): Input image.
+            align (bool): Whether to align detected faces. Defaults to True.
+
+        Returns:
+            List[Tuple[ndarray, List[float], float]]: A list of tuples containing detected face images, 
+                face region coordinates, and confidence scores."""
         img_region = [0, 0, img.shape[1], img.shape[0]]
         faces = []
         
@@ -46,6 +64,13 @@ class OpenCvClient(DetectorBase):
         return resp
 
     def find_eyes(self, img: ndarray) -> tuple:
+        """Finds the coordinates of the eyes in the input image.
+
+        Args:
+            img (ndarray): Input image.
+
+        Returns:
+            tuple: Tuple containing the coordinates of the left and right eyes."""
         left_eye = None
         right_eye = None
 
@@ -75,6 +100,16 @@ class OpenCvClient(DetectorBase):
         return left_eye, right_eye
 
     def __build_cascade(self, model_name="haarcascade") -> Any:
+        """Builds a cascade classifier model.
+
+        Args:
+            model_name (str, optional): Name of the model. Defaults to "haarcascade".
+
+        Raises:
+            ValueError: If the specified model name is not implemented.
+
+        Returns:
+            Any: Cascade classifier model."""
         opencv_path = self.__get_opencv_path()
         if model_name == "haarcascade":
             face_detector_path = opencv_path + "haarcascade_frontalface_default.xml"
@@ -101,6 +136,10 @@ class OpenCvClient(DetectorBase):
         return detector
 
     def __get_opencv_path(self) -> str:
+        """Gets the path to the OpenCV data directory.
+
+        Returns:
+            str: Path to the OpenCV data directory."""
         folders = cv2.__file__.split(sep)[0:-1]
         path = folders[0]
         for folder in folders[1:]:
@@ -110,8 +149,15 @@ class OpenCvClient(DetectorBase):
 
 
 class DetectorWrapper:
+    """Wrapper class for the face detector.
+
+    Provides a unified interface to build and detect faces using different backends."""
     @staticmethod
     def build_model() -> OpenCvClient:
+        """Builds the face detector model.
+
+        Returns:
+            OpenCvClient: Instance of the OpenCvClient class."""
         global face_detector_obj
         if not "face_detector_obj" in globals():
             face_detector_obj = {}
@@ -123,4 +169,12 @@ class DetectorWrapper:
 
     @staticmethod
     def detect_faces(img: ndarray, align: bool = True) -> list:
+        """Detects faces in the input image.
+
+        Args:
+            img (ndarray): Input image.
+            align (bool): Whether to align detected faces. Defaults to True.
+
+        Returns:
+            list: List of tuples containing detected face images, region coordinates, and confidence scores."""
         return DetectorWrapper.build_model().detect_faces(img=img, align=align)

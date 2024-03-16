@@ -17,6 +17,16 @@ initialize_folder()
 async def analyze(img: Union[str, np.ndarray], 
                   actions: Dict[str, bool] = {"age": True, "emotion": True, "gender": True, "race": True},
                   align: bool = True, enforce_detection: bool = True) -> List[Dict[str, Any]]:
+    """Analyze an image to detect faces and perform specified actions.
+
+    Args:
+        img (Union[str, np.ndarray]): Input image path or array.
+        actions (Dict[str, bool], optional): Dictionary specifying which actions to perform. Defaults to {"age": True, "emotion": True, "gender": True, "race": True}.
+        align (bool, optional): Whether to perform face alignment. Defaults to True.
+        enforce_detection (bool, optional): Whether to enforce face detection. Defaults to True.
+
+    Returns:
+        List[Dict[str, Any]]: List of dictionaries containing analysis results for each detected face."""
     try:
         img_objs = await asyncio.to_thread(F.extract_faces, img, (224, 224), 
                                            False, enforce_detection, align)
@@ -51,6 +61,19 @@ async def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray],
                  model_name: str = "VGG-Face", distance_metric: str = "cosine", 
                  enforce_detection: bool = True, align: bool = True, 
                  normalization: str = "base") -> Dict[str, Any]:
+    """Verify whether two images contain the same person.
+
+    Args:
+        img1 (Union[str, np.ndarray]): Path to or array of the first image.
+        img2 (Union[str, np.ndarray]): Path to or array of the second image.
+        model_name (str, optional): Model to be used for facial recognition. Defaults to "VGG-Face".
+        distance_metric (str, optional): Distance metric to measure similarity. Defaults to "cosine".
+        enforce_detection (bool, optional): Whether to enforce face detection. Defaults to True.
+        align (bool, optional): Whether to align faces. Defaults to True.
+        normalization (str, optional): Type of normalization to be applied. Defaults to "base".
+
+    Returns:
+        Dict[str, Any]: Verification result."""
     target_size = await asyncio.to_thread(F.find_size, model_name)
 
     distances, regions = [], []
@@ -88,6 +111,13 @@ async def verify(img1: Union[str, np.ndarray], img2: Union[str, np.ndarray],
 
 
 def get_image_metadata(image: bytes) -> Dict[str, Any]:
+    """Extract metadata from an image.
+
+    Args:
+        image (bytes): Image bytes.
+
+    Returns:
+        Dict[str, Any]: Image metadata."""
     i = Image.open(BytesIO(image))
     
     data = {
