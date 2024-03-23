@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/analyze")
-async def analyze_image(request: AnalyzeModel):
+def analyze_image(request: AnalyzeModel):
     """Analyze an image to detect facial attributes like age, emotion, gender, and race.
 
     Args:
@@ -24,7 +24,7 @@ async def analyze_image(request: AnalyzeModel):
     Raises:
         Exception: If an error occurs during the analysis process."""
     try:
-        return await analyze(request.b64_img, request.actions)
+        return analyze(request.b64_img, request.actions)
     except Exception as e:
         return {"error": e}
 
