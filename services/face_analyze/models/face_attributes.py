@@ -97,7 +97,7 @@ class EmotionClient(AttributeModelBase):
 
 
 class GenderClient(AttributeModelBase):
-    labels = ["Woman", "Man"]
+    labels = ["woman", "man"]
 
     def __init__(self):
         """Initialize the GenderClient."""
@@ -134,7 +134,7 @@ class GenderClient(AttributeModelBase):
 
 
 class RaceClient(AttributeModelBase):
-    labels = ["asian", "indian", "black", "white", "middle eastern", "latino hispanic"]
+    labels = ["asian", "indian", "black", "white", "middle_eastern", "latino_hispanic"]
 
     def __init__(self):
         """Initialize the RaceClient."""
