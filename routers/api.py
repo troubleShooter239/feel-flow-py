@@ -44,7 +44,7 @@ def img_metadata(request: MetadataModel):
     try:                                    
         return get_image_metadata(b64decode(request.b64_img))
     except Exception as e:
-        return {"error": e}
+        return {"error": f"{e}"}
 
 
 @router.post("/verify")
