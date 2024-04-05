@@ -2,13 +2,14 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from cv2 import COLOR_BGR2GRAY, resize, cvtColor
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
 from numba import njit
 
 from ..models import face_attributes as fa
 from ..models import recognition_models as rm
 from ..detectors.opencv_client import DetectorWrapper
 from ..loaders.image_loader import load_image
-from .package_utils import Model, image
 
 
 def build_model(model_name: str) -> Model:

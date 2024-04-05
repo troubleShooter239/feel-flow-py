@@ -4,12 +4,12 @@ from typing import Any, Dict, List, Union
 import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS, IFD
+from tensorflow.keras.models import Model
 
 from .commons.distance import find_cosine, find_euclidean
 from .commons import functions as F
 from .commons.folder_utils import initialize_folder
 from .commons.face_processor import FaceProcessor
-from .commons.package_utils import Model
 
 initialize_folder()
 

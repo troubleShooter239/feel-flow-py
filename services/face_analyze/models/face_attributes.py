@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
+from tensorflow.keras.layers import (
+    Activation, AveragePooling2D, Conv2D, Convolution2D, Dense, 
+    Dropout, Flatten, MaxPooling2D
+)
+from tensorflow.keras.models import Model, Sequential
 
 from ..base.base_models import AttributeModelBase
 from ..commons import constants as C
 from ..commons.folder_utils import get_deepface_home
-from ..commons.package_utils import (
-    Model, Sequential, Convolution2D, Flatten, Activation, Conv2D, MaxPooling2D,
-    AveragePooling2D, Dense, Dropout
-)
 from .recognition_models import VggFaceClient
 
 

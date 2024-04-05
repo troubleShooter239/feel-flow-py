@@ -2,8 +2,16 @@ from typing import List
 from os.path import isfile
 
 import tensorflow as tf
+from tensorflow.keras.backend import sqrt, l2_normalize
+from tensorflow.python.keras.engine import training
+from tensorflow.keras.layers import (
+    Activation, AveragePooling2D, Add, BatchNormalization, concatenate, 
+    Conv2D, Convolution2D, Dense, Dropout, Input, Flatten, Lambda, 
+    MaxPooling2D, PReLU, ZeroPadding2D
+)
+from tensorflow.keras.models import Model, Sequential
 from cv2 import FaceRecognizerSF
-from zipfile import ZipFile
+#from zipfile import ZipFile
 from bz2 import BZ2File
 from dlib import face_recognition_model_v1
 from gdown import download
@@ -13,11 +21,7 @@ from ..commons import constants as C
 from ..commons import functions as F
 from ..base.base_models import FacialRecognitionBase, FaceNetBase
 from ..commons.folder_utils import get_deepface_home
-from ..commons.package_utils import (
-    Model, BatchNormalization, Dropout, Flatten, Dense, Input, ZeroPadding2D, Conv2D, 
-    PReLU, Add, Sequential, Convolution2D, MaxPooling2D, Activation, training, 
-    LocallyConnected2D, Lambda, concatenate, AveragePooling2D, l2_normalize, sqrt
-)
+
 
 class ArcFaceClient(FacialRecognitionBase):
     def __init__(self) -> None:
@@ -151,51 +155,51 @@ class ArcFaceClient(FacialRecognitionBase):
         x = ArcFaceClient.stack1(x, 256, 6, name="conv4")
         return ArcFaceClient.stack1(x, 512, 3, name="conv5")
 
+# TODO: LocallyConnected2D is not supported
+# class DeepFaceClient(FacialRecognitionBase):
+#     def __init__(self) -> None:
+#         """Initialize the DeepFaceClient."""
+#         self.model, self.model_name = self.load_model(), "DeepFace"
 
-class DeepFaceClient(FacialRecognitionBase):
-    def __init__(self) -> None:
-        """Initialize the DeepFaceClient."""
-        self.model, self.model_name = self.load_model(), "DeepFace"
+#     def find_embeddings(self, img: ndarray) -> List[float]:
+#         """Find facial embeddings from the input image.
 
-    def find_embeddings(self, img: ndarray) -> List[float]:
-        """Find facial embeddings from the input image.
+#         Args:
+#             img (ndarray): Input image.
 
-        Args:
-            img (ndarray): Input image.
+#         Returns:
+#             List[float]: Facial embeddings."""
+#         return self.model(img, training=False).numpy()[0].tolist()
 
-        Returns:
-            List[float]: Facial embeddings."""
-        return self.model(img, training=False).numpy()[0].tolist()
+#     def load_model(self, url: str = C.DOWNLOAD_URL_DEEPFACE) -> Model:
+#         """Load the DeepFace model.
 
-    def load_model(self, url: str = C.DOWNLOAD_URL_DEEPFACE) -> Model:
-        """Load the DeepFace model.
+#         Args:
+#             url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_DEEPFACE.
 
-        Args:
-            url (str, optional): URL for model weights. Defaults to C.DOWNLOAD_URL_DEEPFACE.
-
-        Returns:
-            Model: Loaded model."""
-        base_model = Sequential()
-        base_model.add(Convolution2D(32, (11, 11), activation="relu", 
-                                     name="C1", input_shape=(152, 152, 3)))
-        base_model.add(MaxPooling2D(pool_size=3, strides=2, padding="same", name="M2"))
-        base_model.add(Convolution2D(16, (9, 9), activation="relu", name="C3"))
-        base_model.add(LocallyConnected2D(16, (9, 9), activation="relu", name="L4"))
-        base_model.add(LocallyConnected2D(16, (7, 7), strides=2, activation="relu", name="L5"))
-        base_model.add(LocallyConnected2D(16, (5, 5), activation="relu", name="L6"))
-        base_model.add(Flatten(name="F0"))
-        base_model.add(Dense(4096, activation="relu", name="F7"))
-        base_model.add(Dropout(rate=0.5, name="D0"))
-        base_model.add(Dense(8631, activation="softmax", name="F8"))
-        home = get_deepface_home()
-        dr = home + C.PATH_WEIGHTS_DEEPFACE
-        if not isfile(dr):
-            output = dr + ".zip"
-            download(url, output)
-            with ZipFile(output, "r") as zip_ref:
-                zip_ref.extractall(home + C._WEIGHTS)
-        base_model.load_weights(dr)
-        return Model(inputs=base_model.layers[0].input, outputs=base_model.layers[-3].output)
+#         Returns:
+#             Model: Loaded model."""
+#         base_model = Sequential()
+#         base_model.add(Convolution2D(32, (11, 11), activation="relu", 
+#                                      name="C1", input_shape=(152, 152, 3)))
+#         base_model.add(MaxPooling2D(pool_size=3, strides=2, padding="same", name="M2"))
+#         base_model.add(Convolution2D(16, (9, 9), activation="relu", name="C3"))
+#         base_model.add(LocallyConnected2D(16, (9, 9), activation="relu", name="L4"))
+#         base_model.add(LocallyConnected2D(16, (7, 7), strides=2, activation="relu", name="L5"))
+#         base_model.add(LocallyConnected2D(16, (5, 5), activation="relu", name="L6"))
+#         base_model.add(Flatten(name="F0"))
+#         base_model.add(Dense(4096, activation="relu", name="F7"))
+#         base_model.add(Dropout(rate=0.5, name="D0"))
+#         base_model.add(Dense(8631, activation="softmax", name="F8"))
+#         home = get_deepface_home()
+#         dr = home + C.PATH_WEIGHTS_DEEPFACE
+#         if not isfile(dr):
+#             output = dr + ".zip"
+#             download(url, output)
+#             with ZipFile(output, "r") as zip_ref:
+#                 zip_ref.extractall(home + C._WEIGHTS)
+#         base_model.load_weights(dr)
+#         return Model(inputs=base_model.layers[0].input, outputs=base_model.layers[-3].output)
 
 
 class DeepIdClient(FacialRecognitionBase):
