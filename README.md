@@ -1,4 +1,4 @@
-# FeelFlow API
+# FeelFlow-API
 
 This is the official repository for the FeelFlow API, a service designed to analyze media content using neural processing techniques. The API is built on FastAPI and UVicorn, providing endpoints for various functionalities related to media analysis, particularly focusing on detecting human faces within images.
 
