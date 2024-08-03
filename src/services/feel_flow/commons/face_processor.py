@@ -1,10 +1,5 @@
 from numpy import argmax
 
-    # return VerifyResult(verified=True if distance <= threshold else False, distance=float(distance), 
-    #                     threshold=threshold, model=model_name, distance_metric=distance_metric, 
-    #                     facial_areas=FacialAreas(img1=Region(**facial_areas[0]), 
-    #                                              img2=Region(**facial_areas[1])))
-
 from services.feel_flow.models.response_models import Emotion, Gender, Race
 
 from ..clients.face_clients import EmotionClient, GenderClient, RaceClient

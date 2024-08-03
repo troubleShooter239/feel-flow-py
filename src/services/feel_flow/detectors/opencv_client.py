@@ -49,7 +49,10 @@ class OpenCvClient(DetectorBase):
             detected_face = img[int(y) : int(y + h), int(x) : int(x + w)]
 
             if align:
-                left_eye, right_eye = self.find_eyes(detected_face)
+                try:
+                    left_eye, right_eye = self.find_eyes(detected_face)
+                except ValueError:
+                    left_eye = right_eye = None
                 detected_face = self._align_face(detected_face, left_eye, right_eye)
 
             resp.append((detected_face, (x, y, w, h), confidence))
@@ -65,7 +68,7 @@ class OpenCvClient(DetectorBase):
         Returns:
             tuple: Tuple containing the coordinates of the left and right eyes."""
         if img.shape[0] == 0 or img.shape[1] == 0:
-            raise ValueError("ad image shape")
+            raise ValueError("bad image shape")
 
         eyes = self.model["eye_detector"].detectMultiScale(cvtColor(img, COLOR_BGR2GRAY), 1.1, 10)
         eyes = sorted(eyes, key=lambda v: abs(v[2] * v[3]), reverse=True)
