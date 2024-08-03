@@ -33,13 +33,13 @@ class Race(BaseModel):
 
 
 class Actions(BaseModel):
-    age: int
-    emotion: Emotion
-    dominant_emotion: str
-    gender: Gender
-    dominant_gender: str
-    race: Race
-    dominant_race: str
+    age: int | None = None
+    emotion: Emotion | None = None
+    dominant_emotion: str | None = None
+    gender: Gender | None = None
+    dominant_gender: str | None = None
+    race: Race | None = None
+    dominant_race: str | None = None
 
 
 class FaceAnalysis(BaseModel):
