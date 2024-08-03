@@ -1,6 +1,6 @@
 # feel-flow-py
 
-Feel Flow is a RESTful API designed for analyzing photos. The API is built on FastAPI and UVicorn, providing endpoints for various functionalities related to media analysis, particularly focusing on detecting human faces within images.
+Feel Flow is a `RESTful API` designed for analyzing photos. The API is built on FastAPI and UVicorn, providing endpoints for various functionalities related to media analysis, particularly focusing on detecting human faces within images. The primary advantage of Feel Flow is its `high performance`, making it suitable for applications requiring fast and reliable image analysis.
 
 ## Contents
 
