@@ -1,9 +1,8 @@
 from os.path import isfile, sep
-from typing import Any
 
-import cv2
+from cv2 import cvtColor, COLOR_BGR2GRAY, CascadeClassifier
 
-from ..base.base_detector import DetectorBase, ndarray, List, Tuple
+from ..base.base_detector import DetectorBase, ndarray
 
 
 class OpenCvClient(DetectorBase):
@@ -14,7 +13,7 @@ class OpenCvClient(DetectorBase):
     def __init__(self):
         self.model = self.build_model()
 
-    def build_model(self) -> dict:
+    def build_model(self) -> dict[str, CascadeClassifier]:
         """Builds and returns the face and eye detector models.
 
         Returns:
@@ -25,8 +24,7 @@ class OpenCvClient(DetectorBase):
             "eye_detector": self.__build_cascade("haarcascade_eye")
         }
 
-    def detect_faces(self, img: ndarray, 
-                     align: bool = True) -> List[Tuple[ndarray, List[float], float]]:
+    def detect_faces(self, img: ndarray, align: bool = True) -> tuple[tuple[ndarray, tuple[int, int, int, int], float]]:
         """Detects faces in the input image.
 
         Args:
@@ -36,18 +34,15 @@ class OpenCvClient(DetectorBase):
         Returns:
             List[Tuple[ndarray, List[float], float]]: A list of tuples containing detected face images, 
                 face region coordinates, and confidence scores."""
-        img_region = [0, 0, img.shape[1], img.shape[0]]
         faces = []
         
         try:
-            faces, _, scores = self.model["face_detector"].detectMultiScale3(
-                img, 1.1, 10, outputRejectLevels=True
-            )
-        except:
+            faces, _, scores = self.model["face_detector"].detectMultiScale3(img, 1.1, 10, outputRejectLevels=True)
+        except Exception:
             pass
 
         if len(faces) == 0:
-            return []
+            raise ValueError("no faces was found")
 
         resp = []
         for (x, y, w, h), confidence in zip(faces, scores):
@@ -57,13 +52,11 @@ class OpenCvClient(DetectorBase):
                 left_eye, right_eye = self.find_eyes(detected_face)
                 detected_face = self._align_face(detected_face, left_eye, right_eye)
 
-            img_region = [x, y, w, h]
+            resp.append((detected_face, (x, y, w, h), confidence))
 
-            resp.append((detected_face, img_region, confidence))
+        return tuple(resp)
 
-        return resp
-
-    def find_eyes(self, img: ndarray) -> tuple:
+    def find_eyes(self, img: ndarray) -> tuple[tuple[int, int], tuple[int, int]]:
         """Finds the coordinates of the eyes in the input image.
 
         Args:
@@ -71,35 +64,29 @@ class OpenCvClient(DetectorBase):
 
         Returns:
             tuple: Tuple containing the coordinates of the left and right eyes."""
-        left_eye = None
-        right_eye = None
-
         if img.shape[0] == 0 or img.shape[1] == 0:
-            return left_eye, right_eye
+            raise ValueError("ad image shape")
 
-        eyes = self.model["eye_detector"].detectMultiScale(
-            cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 1.1, 10)
+        eyes = self.model["eye_detector"].detectMultiScale(cvtColor(img, COLOR_BGR2GRAY), 1.1, 10)
         eyes = sorted(eyes, key=lambda v: abs(v[2] * v[3]), reverse=True)
 
-        if len(eyes) >= 2:
-            eye_1 = eyes[0]
-            eye_2 = eyes[1]
+        if len(eyes) < 2:
+            raise ValueError("no eyes was found")
 
-            if eye_1[0] < eye_2[0]:
-                left_eye = eye_1
-                right_eye = eye_2
-            else:
-                left_eye = eye_2
-                right_eye = eye_1
+        eye_1 = eyes[0]
+        eye_2 = eyes[1]
 
-            left_eye = (int(left_eye[0] + (left_eye[2] / 2)), 
-                        int(left_eye[1] + (left_eye[3] / 2)))
-            right_eye = (int(right_eye[0] + (right_eye[2] / 2)),
-                         int(right_eye[1] + (right_eye[3] / 2)))
+        if eye_1[0] < eye_2[0]:
+            left_eye = eye_1
+            right_eye = eye_2
+        else:
+            left_eye = eye_2
+            right_eye = eye_1
             
-        return left_eye, right_eye
+        return ((int(left_eye[0] + (left_eye[2] / 2)), int(left_eye[1] + (left_eye[3] / 2))), 
+                (int(right_eye[0] + (right_eye[2] / 2)), int(right_eye[1] + (right_eye[3] / 2))))
 
-    def __build_cascade(self, model_name="haarcascade") -> Any:
+    def __build_cascade(self, model_name="haarcascade") -> CascadeClassifier:
         """Builds a cascade classifier model.
 
         Args:
@@ -109,26 +96,23 @@ class OpenCvClient(DetectorBase):
             ValueError: If the specified model name is not implemented.
 
         Returns:
-            Any: Cascade classifier model."""
+            cv2.CascadeClassifier: Cascade classifier model."""
         opencv_path = self.__get_opencv_path()
         if model_name == "haarcascade":
             face_detector_path = opencv_path + "haarcascade_frontalface_default.xml"
             if not isfile(face_detector_path):
                 raise ValueError(
-                    "Confirm that opencv is installed on your environment! Expected path ",
-                    face_detector_path, " violated.",
+                    "Confirm that opencv is installed on your environment! Expected path ", face_detector_path, " violated."
                 )
-            detector = cv2.CascadeClassifier(face_detector_path)
+            detector = CascadeClassifier(face_detector_path)
 
         elif model_name == "haarcascade_eye":
             eye_detector_path = opencv_path + "haarcascade_eye.xml"
             if not isfile(eye_detector_path):
                 raise ValueError(
-                    "Confirm that opencv is installed on your environment! Expected path ",
-                    eye_detector_path,
-                    " violated."
+                    "Confirm that opencv is installed on your environment! Expected path ", eye_detector_path, " violated."
                 )
-            detector = cv2.CascadeClassifier(eye_detector_path)
+            detector = CascadeClassifier(eye_detector_path)
 
         else:
             raise ValueError(f"unimplemented model_name for build_cascade - {model_name}")
@@ -140,6 +124,7 @@ class OpenCvClient(DetectorBase):
 
         Returns:
             str: Path to the OpenCV data directory."""
+        import cv2
         folders = cv2.__file__.split(sep)[0:-1]
         path = folders[0]
         for folder in folders[1:]:
@@ -168,7 +153,7 @@ class DetectorWrapper:
         return face_detector_obj[detector_backend]
 
     @staticmethod
-    def detect_faces(img: ndarray, align: bool = True) -> list:
+    def detect_faces(img: ndarray, align: bool = True) -> tuple[tuple[ndarray, tuple[int, int, int, int], float]]:
         """Detects faces in the input image.
 
         Args:

@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from uvicorn import run
 
-from routers.api import router
+from api import image
 
 app = FastAPI()
-app.include_router(router)
-
+app.include_router(image.router)
 
 if __name__ == "__main__":
     run("main:app", reload=True)

@@ -1,23 +1,22 @@
-import cv2
-import numpy as np
+from cv2 import cvtColor, COLOR_BGR2GRAY, resize
+from numpy import ndarray, sum, array, float64, expand_dims
 from tensorflow.keras.layers import (
-    Activation, AveragePooling2D, Conv2D, Convolution2D, Dense, 
-    Dropout, Flatten, MaxPooling2D
+    Activation, AveragePooling2D, Conv2D, Convolution2D, Dense, Dropout, 
+    Flatten, MaxPooling2D
 )
 from tensorflow.keras.models import Model, Sequential
 
 from ..base.base_models import AttributeModelBase
-from ..commons import constants as C
-from ..commons.folder_utils import get_deepface_home
-from .recognition_models import VggFaceClient
+from ..commons.settings import models_settings
+from .recognition_clients import VggFaceClient
 
 
 class ApparentAgeClient(AttributeModelBase):
     def __init__(self) -> None:
         """Initialize the ApparentAgeClient."""
-        self.model, self.model_name = self.load_model(), "Age"
+        self.model = self.load_model()
 
-    def predict(self, img: np.ndarray) -> np.float64:
+    def predict(self, img: ndarray) -> float64:
         """Predict the apparent age from the input image.
 
         Args:
@@ -25,9 +24,10 @@ class ApparentAgeClient(AttributeModelBase):
 
         Returns:
             np.float64: Predicted apparent age."""
-        return np.sum(self.model.predict(img, verbose=0)[0, :] * np.array(list(range(0, 101))))
+        return sum(self.model.predict(img, verbose=0)[0, :] * array(list(range(0, 101))))
 
-    def load_model(self, url: str = C.DOWNLOAD_URL_AGE) -> Model:
+    @classmethod
+    def load_model(cls) -> Model:
         """Load the model for apparent age prediction.
 
         Args:
@@ -41,20 +41,20 @@ class ApparentAgeClient(AttributeModelBase):
         base_out = Flatten()(base_out)
         base_out = Activation("softmax")(base_out)
         age_model = Model(inputs=model.input, outputs=base_out)
-        output = get_deepface_home() + C.PATH_WEIGHTS_AGE
-        self._download(url, output)
-        age_model.load_weights(output)
+        age_model.load_weights(cls._download(models_settings.face_attrs.age))
         return age_model
 
 
 class EmotionClient(AttributeModelBase):
-    labels = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+    labels: tuple[str, str, str, str, str, str, str] = (
+        "angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"
+    )
 
     def __init__(self):
         """Initialize the EmotionClient."""
-        self.model, self.model_name = self.load_model(), "Emotion"
+        self.model = self.load_model()
 
-    def predict(self, img: np.ndarray) -> np.ndarray:
+    def predict(self, img: ndarray) -> ndarray:
         """Predict the emotion from the input image.
 
         Args:
@@ -62,12 +62,12 @@ class EmotionClient(AttributeModelBase):
 
         Returns:
             np.ndarray: Predicted emotion probabilities."""
-        img_gray = cv2.cvtColor(img[0], cv2.COLOR_BGR2GRAY)
-        img_gray = cv2.resize(img_gray, (48, 48))
-        img_gray = np.expand_dims(img_gray, axis=0)
-        return self.model.predict(img_gray, verbose=0)[0, :]
+        img_gray = cvtColor(img[0], COLOR_BGR2GRAY)
+        img_gray = resize(img_gray, (48, 48))
+        return self.model.predict(expand_dims(img_gray, axis=0), verbose=0)[0, :]
 
-    def load_model(self, url: str = C.DOWNLOAD_URL_EMOTION) -> Sequential:
+    @classmethod
+    def load_model(cls) -> Sequential:
         """Load the model for emotion prediction.
 
         Args:
@@ -91,20 +91,18 @@ class EmotionClient(AttributeModelBase):
         model.add(Dense(1024, activation="relu"))
         model.add(Dropout(0.2))
         model.add(Dense(num_classes, activation="softmax"))
-        output = get_deepface_home() + C.PATH_WEIGHTS_EMOTION
-        self._download(url, output)
-        model.load_weights(output)
+        model.load_weights(cls._download(models_settings.face_attrs.emotion))
         return model
 
 
 class GenderClient(AttributeModelBase):
-    labels = ["woman", "man"]
+    labels: tuple[str, str] = ("woman", "man")
 
     def __init__(self):
         """Initialize the GenderClient."""
-        self.model, self.model_name = self.load_model(), "Gender"
+        self.model = self.load_model()
 
-    def predict(self, img: np.ndarray) -> np.ndarray:
+    def predict(self, img: ndarray) -> ndarray:
         """Predict the gender from the input image.
 
         Args:
@@ -114,7 +112,8 @@ class GenderClient(AttributeModelBase):
             np.ndarray: Predicted gender probabilities."""
         return self.model.predict(img, verbose=0)[0, :]
 
-    def load_model(self, url: str = C.DOWNLOAD_URL_GENDER) -> Model:
+    @classmethod
+    def load_model(cls) -> Model:
         """Load the model for gender prediction.
 
         Args:
@@ -128,20 +127,20 @@ class GenderClient(AttributeModelBase):
         base_model_output = Flatten()(base_model_output)
         base_model_output = Activation("softmax")(base_model_output)
         gender_model = Model(inputs=model.input, outputs=base_model_output)
-        output = get_deepface_home() + C.PATH_WEIGHTS_GENDER
-        self._download(url, output)
-        gender_model.load_weights(output)
+        gender_model.load_weights(cls._download(models_settings.face_attrs.gender))
         return gender_model
 
 
 class RaceClient(AttributeModelBase):
-    labels = ["asian", "indian", "black", "white", "middle_eastern", "latino_hispanic"]
+    labels: tuple[str, str, str, str, str, str] = (
+        "asian", "indian", "black", "white", "middle_eastern", "latino_hispanic"
+    )
 
     def __init__(self):
         """Initialize the RaceClient."""
-        self.model, self.model_name = self.load_model(), "Race"
+        self.model = self.load_model()
 
-    def predict(self, img: np.ndarray) -> np.ndarray:
+    def predict(self, img: ndarray) -> ndarray:
         """Predict the race from the input image.
 
         Args:
@@ -151,7 +150,8 @@ class RaceClient(AttributeModelBase):
             np.ndarray: Predicted race probabilities."""
         return self.model.predict(img, verbose=0)[0, :]
 
-    def load_model(self, url: str = C.DOWNLOAD_URL_RACE) -> Model:
+    @classmethod
+    def load_model(cls) -> Model:
         """Load the model for race prediction.
 
         Args:
@@ -165,7 +165,5 @@ class RaceClient(AttributeModelBase):
         base_model_output = Flatten()(base_model_output)
         base_model_output = Activation("softmax")(base_model_output)
         race_model = Model(inputs=model.input, outputs=base_model_output)
-        output = get_deepface_home() + C.PATH_WEIGHTS_RACE
-        self._download(url, output)
-        race_model.load_weights(output)
+        race_model.load_weights(cls._download(models_settings.face_attrs.race))
         return race_model
